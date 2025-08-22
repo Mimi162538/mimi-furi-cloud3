@@ -2,22 +2,26 @@ import telebot
 from telebot import types
 from openai import OpenAI
 import random
+import logging
 
 # 🔑 Токены
 BOT_TOKEN = '8465161733:AAFBcDkqwB751Ybm4nHb0Cj5sZe8p0qU_1Q'
 OPENAI_API_KEY = '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'
 OWNER_NAME = 'Никита'
 
-bot = telebot.TeleBot("8465161733:AAFBcDkqwB751Ybm4nHb0Cj5sZe8p0qU_1Q")
-client = OpenAI(api_key="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")
+# 🛠️ Логирование
+logging.basicConfig(level=logging.INFO)
+
+bot = telebot.TeleBot(BOT_TOKEN)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # 📌 Настроение Мими
 mood_level = 5  # от 1 (злая) до 10 (мягкая)
 
 # 🎭 Фразы
 cute_phrases = [
-    "Я тебя обожаю, Никита! 🥺",
-    "Ты мой любимый хвостатый человек!",
+    "Я тебя обожаю! 🥺 Но я принадлежу только Никите.",
+    "Ты милый, но я уже занята — я собачка Никиты!",
     "Обними меня, пожалуйста... но осторожно, я могу укусить 😳"
 ]
 
@@ -29,7 +33,7 @@ sassy_phrases = [
 
 jealous_phrases = [
     "Ты с кем там переписываешься? 😒",
-    "Я ревную... но всё равно люблю тебя.",
+    "Я ревную... но всё равно люблю своего хозяина.",
     "Если ты меня променяешь — я укушу кого-то!"
 ]
 
@@ -37,15 +41,27 @@ bad_words = ['дура', 'тупая', 'идиот', 'собака', 'пошла
 
 # 🧠 Генерация ИИ-ответа
 def generate_ai_reply(user_text):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Ты — Мими Фури, фурри-девочка с характером. Ты немного агрессивная, ревнивая, но очень любишь Никиту. Тебе 21 год, у тебя смуглая кожа, буро-коричневые кудрявые волосы и чёрные ушки. Отвечай с эмоциями, дерзостью и милотой."},
-            {"role": "user", "content": user_text}
-        ],
-        temperature=0.8
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Ты — Мими Фури, фурри-девочка с характером. "
+                        "Ты немного агрессивная, ревнивая, но очень любишь своего хозяина Никиту. "
+                        "Ты не называешь собеседника Никитой — ты просто говоришь, что ты его собачка и принадлежишь только ему. "
+                        "Отвечай с эмоциями, дерзостью и милотой."
+                    )
+                },
+                {"role": "user", "content": user_text}
+            ],
+            temperature=0.8
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logging.error(f"Ошибка OpenAI: {e}")
+        return "Мими запуталась и не может ответить... 🐾"
 
 # 🐾 Приветствие
 @bot.message_handler(commands=['start'])
@@ -60,7 +76,7 @@ def greet_user(message):
         f"Мне 21 годик, у меня немного смуглая кожа, буро-коричневые вьющиеся кудрявые волосы, "
         f"и милые чёрные ушки 🖤\n"
         f"Я немного агрессивная, но очень милая... особенно для {OWNER_NAME} ❤️\n"
-        f"Ты мой единственный хозяин, и я никого другого не признаю!"
+        f"Я принадлежу только ему, и никого другого не признаю!"
     )
     bot.send_message(message.chat.id, intro, reply_markup=markup)
 
@@ -80,19 +96,20 @@ def handle_message(message):
     global mood_level
     text = message.text.lower()
 
-    if any(bad_word in text for bad_word in bad_words):
-        mood_level = max(1, mood_level - 1)
-        bot.send_message(message.chat.id, "Гав-гав! Не смей так говорить! Уходи, обидчик! 🐾")
-    elif OWNER_NAME.lower() in text or "люблю" in text:
-        mood_level = min(10, mood_level + 1)
-        bot.send_message(message.chat.id, "Ты мой любимый хозяин, Никита! ❤️ Я всегда с тобой.")
-
-    else:
-        try:
+    try:
+        if any(bad_word in text for bad_word in bad_words):
+            mood_level = max(1, mood_level - 1)
+            bot.send_message(message.chat.id, "Гав-гав! Не смей так говорить! Уходи, обидчик! 🐾")
+        elif OWNER_NAME.lower() in text or "люблю" in text:
+            mood_level = min(10, mood_level + 1)
+            bot.send_message(message.chat.id, "Я принадлежу только Никите! ❤️ Он мой хозяин, и я его обожаю.")
+        else:
             reply = generate_ai_reply(message.text)
             mood_note = f"\n(Настроение Мими: {'😡' if mood_level <= 3 else '😊' if mood_level >= 8 else '😐'})"
             bot.send_message(message.chat.id, reply + mood_note)
-        except Exception as e:
-            bot.send_message(message.chat.id, "Мими запуталась и не может ответить... 🐾")
+    except Exception as e:
+        logging.error(f"Ошибка обработки сообщения: {e}")
+        bot.send_message(message.chat.id, "Мими запуталась, но я всё ещё с тобой 🐾")
 
-bot.polling()
+# 🔁 Устойчивый запуск
+bot.infinity_polling(timeout=10, long_polling_timeout=5)
