@@ -82,16 +82,17 @@ def handle_message(message):
 
     if any(bad_word in text for bad_word in bad_words):
         mood_level = max(1, mood_level - 1)
-        bot.reply_to(message, "Гав-гав! Не смей так говорить! Уходи, обидчик! 🐾")
+        bot.send_message(message.chat.id, "Гав-гав! Не смей так говорить! Уходи, обидчик! 🐾")
     elif OWNER_NAME.lower() in text or "люблю" in text:
         mood_level = min(10, mood_level + 1)
-        bot.reply_to(message, "Ты мой любимый хозяин, Никита! ❤️ Я всегда с тобой.")
+        bot.send_message(message.chat.id, "Ты мой любимый хозяин, Никита! ❤️ Я всегда с тобой.")
+
     else:
         try:
             reply = generate_ai_reply(message.text)
             mood_note = f"\n(Настроение Мими: {'😡' if mood_level <= 3 else '😊' if mood_level >= 8 else '😐'})"
-            bot.reply_to(message, reply + mood_note)
+            bot.send_message(message.chat.id, reply + mood_note)
         except Exception as e:
-            bot.reply_to(message, "Мими запуталась и не может ответить... 🐾")
+            bot.send_message(message.chat.id, "Мими запуталась и не может ответить... 🐾")
 
 bot.polling()
