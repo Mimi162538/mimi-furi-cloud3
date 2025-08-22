@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: mimi-furi
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python mimi2_bot.py"
+    envVars:
+      - key: BOT_TOKEN
+        value: "8465161733:AAFBcDkqwB751Ybm4nHb0Cjs5Ze8p0qU_1Q"
+      - key: OPENAI_API_KEY
+        value: "sk-proj-JtDiLFQepVTzqwVqIEXB4TKjl0lyWuvgDqH7WN49qjQBjIcyd0_9Pjm-kh_omP7UzGsm33NsRT3IblkFJMMtJhryLBu2uKVMvF4RhsHTRhb006gRyVLOE8qDV9tmacnBRziOXmjZgxIO0CGcHFi5_CtqfEA"
